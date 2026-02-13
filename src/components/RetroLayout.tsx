@@ -1,17 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet } from 'react-router-dom';
+import { db } from '../firebase';
+import { doc, onSnapshot, updateDoc, increment, getDoc, setDoc } from 'firebase/firestore';
 
 export const RetroLayout: React.FC = () => {
-    const [count, setCount] = useState(12345);
+    const [count, setCount] = useState(0);
 
     useEffect(() => {
-        // Simulate access counter incrementing slightly
-        const timer = setInterval(() => {
-            if (Math.random() > 0.7) {
-                setCount(c => c + 1);
+        const counterDocRef = doc(db, 'counters', 'visitor_count');
+
+        // Increment counter once per session
+        const hasVisited = sessionStorage.getItem('has_visited');
+        if (!hasVisited) {
+            const incrementCounter = async () => {
+                const docSnap = await getDoc(counterDocRef);
+                if (docSnap.exists()) {
+                    await updateDoc(counterDocRef, {
+                        value: increment(1)
+                    });
+                } else {
+                    await setDoc(counterDocRef, { value: 10000 }); // Start from a "nice" retro number
+                }
+                sessionStorage.setItem('has_visited', 'true');
+            };
+            incrementCounter();
+        }
+
+        // Listen for real-time updates
+        const unsubscribe = onSnapshot(counterDocRef, (doc) => {
+            if (doc.exists()) {
+                setCount(doc.data().value);
             }
-        }, 3000);
-        return () => clearInterval(timer);
+        });
+
+        return () => unsubscribe();
     }, []);
 
     return (

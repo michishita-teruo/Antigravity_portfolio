@@ -14,6 +14,20 @@ export const RetroTop: React.FC = () => {
                         <tr>
                             <td className="text-pink-400 w-24 align-top">2026.2.14</td>
                             <td className="text-white">
+                                アクセスカウンターを本物(Firestore)に更新しました！<br />
+                                キリ番踏んだら本当にラッキーかも！？
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
+                                BBSをFirebase(Firestore)と連携しました！<br />
+                                投稿が世界中で共有されるようになりました！
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
                                 管理人アイコン完成しました！<br />
                                 ピクセルアート風です。
                             </td>
