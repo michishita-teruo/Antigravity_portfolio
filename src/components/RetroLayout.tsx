@@ -19,7 +19,7 @@ export const RetroLayout: React.FC = () => {
                         value: increment(1)
                     });
                 } else {
-                    await setDoc(counterDocRef, { value: 10000 }); // Start from a "nice" retro number
+                    await setDoc(counterDocRef, { value: 1 }); // Start from 1 for the first visitor
                 }
                 sessionStorage.setItem('has_visited', 'true');
             };
