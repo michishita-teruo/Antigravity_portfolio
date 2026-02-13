@@ -14,6 +14,13 @@ export const RetroTop: React.FC = () => {
                         <tr>
                             <td className="text-pink-400 w-24 align-top">2026.2.14</td>
                             <td className="text-white">
+                                管理人日記を執筆しました。タイトルは「接続、連動、そして共有」です。<br />
+                                ぜひ読んでいってください。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
                                 アクセスカウンターを本物(Firestore)に更新しました！<br />
                                 キリ番踏んだら本当にラッキーかも！？
                             </td>
