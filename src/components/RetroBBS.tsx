@@ -1,38 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import { db } from '../firebase';
+import {
+    collection,
+    addDoc,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp,
+    Timestamp
+} from 'firebase/firestore';
 
 type Post = {
-    id: number;
+    id: string;
     name: string;
     email: string;
     title: string;
     message: string;
     date: string;
     color: string;
+    createdAt?: Timestamp;
 };
 
-const INITIAL_POSTS: Post[] = [
-    {
-        id: 1,
-        name: '管理人',
-        email: 'admin@antigravity',
-        title: 'BBS設置しました',
-        message: '足跡残していってください。キリ番報告もこちらへ。',
-        date: '2026/02/14(Sat) 12:00',
-        color: '#ff0000'
-    },
-    {
-        id: 2,
-        name: '名無しさん',
-        email: '',
-        title: 'カキコ',
-        message: 'なにこのサイト懐かしすぎワロタｗｗｗ',
-        date: '2026/02/14(Sat) 12:05',
-        color: '#00ff00'
-    }
-];
 
 export const RetroBBS: React.FC = () => {
-    const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
+    const [posts, setPosts] = useState<Post[]>([]);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [title, setTitle] = useState('');
@@ -40,15 +31,34 @@ export const RetroBBS: React.FC = () => {
     const [color, setColor] = useState('#ffffff');
     const [honeypot, setHoneypot] = useState(''); // Anti-bot hidden field
 
-    // Load from local storage
+    // Load from Firestore (Real-time)
     useEffect(() => {
-        const savedPosts = localStorage.getItem('retro_bbs_posts');
-        if (savedPosts) {
-            setPosts(JSON.parse(savedPosts));
-        }
+        const q = query(collection(db, 'bbs_posts'), orderBy('createdAt', 'desc'));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const postsData: Post[] = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                postsData.push({
+                    id: doc.id,
+                    name: data.name,
+                    email: data.email,
+                    title: data.title,
+                    message: data.message,
+                    date: data.date,
+                    color: data.color,
+                    createdAt: data.createdAt
+                });
+            });
+            setPosts(postsData);
+        }, (error) => {
+            console.error("Error fetching posts:", error);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         // Security Check 1: Honeypot
@@ -57,7 +67,7 @@ export const RetroBBS: React.FC = () => {
             return; // Silently fail
         }
 
-        // Security Check 2: Rate Limiting
+        // Security Check 2: Rate Limiting (Local only for simplicity)
         const lastPostTime = localStorage.getItem('retro_bbs_last_post_time');
         const now = Date.now();
         if (lastPostTime && now - parseInt(lastPostTime) < 30000) { // 30 seconds limit
@@ -70,27 +80,31 @@ export const RetroBBS: React.FC = () => {
             return;
         }
 
-        const newPost: Post = {
-            id: Date.now(),
-            name: name || '名無しさん',
-            email,
-            title: title || '無題',
-            message,
-            date: new Date().toLocaleString('ja-JP'),
-            color
-        };
+        const dateStr = new Date().toLocaleString('ja-JP');
 
-        const updatedPosts = [newPost, ...posts];
-        setPosts(updatedPosts);
-        localStorage.setItem('retro_bbs_posts', JSON.stringify(updatedPosts));
-        localStorage.setItem('retro_bbs_last_post_time', now.toString());
+        try {
+            await addDoc(collection(db, 'bbs_posts'), {
+                name: name || '名無しさん',
+                email,
+                title: title || '無題',
+                message,
+                date: dateStr,
+                color,
+                createdAt: serverTimestamp()
+            });
 
-        // Reset form
-        setName('');
-        setEmail('');
-        setTitle('');
-        setMessage('');
-        alert('書き込みました！');
+            localStorage.setItem('retro_bbs_last_post_time', now.toString());
+
+            // Reset form
+            setName('');
+            setEmail('');
+            setTitle('');
+            setMessage('');
+            alert('書き込みました！');
+        } catch (error) {
+            console.error("Error adding document: ", error);
+            alert('エラーが発生しました。時間を空けてもう一度お試しください。');
+        }
     };
 
     return (
