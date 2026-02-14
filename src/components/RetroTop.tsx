@@ -132,6 +132,13 @@ export const RetroTop: React.FC = () => {
                             </td>
                         </tr>
                         <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white font-bold">
+                                【新設】ゲームコーナーに **「ピンボール場」** がオープンしました！🎮<br />
+                                最新技術を無駄遣いしたカオスな演出をお楽しみください。
+                            </td>
+                        </tr>
+                        <tr>
                             <td className="text-pink-400 align-top">2026.2.14</td>
                             <td className="text-white">ホームページ開設しました！相互リンク募集中！</td>
                         </tr>
