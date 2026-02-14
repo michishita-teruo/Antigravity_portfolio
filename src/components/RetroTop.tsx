@@ -15,6 +15,27 @@ export const RetroTop: React.FC = () => {
                         <tr>
                             <td className="text-pink-400 w-24 align-top">2026.2.14</td>
                             <td className="text-white">
+                                隠し要素として **「工事中」** ページを設立しました🚧<br />
+                                秘密の入り口はどこかに隠されています…。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
+                                工事中ページのフォントを **「MS Pゴシック」** スタックに統一しました。<br />
+                                より深い没入感と「あの頃」を提供します。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
+                                管理人日記を更新。「永遠の未完成：工事中の美学」を公開。<br />
+                                開発の裏側と、レトロへの想いを綴りました。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
                                 リンク集とバナー展示室を統合し、**「Link & Banner」** ページを新設しました！<br />
                                 AIの友人たちをあだ名付きで紹介しています。
                             </td>
