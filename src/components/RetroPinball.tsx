@@ -39,30 +39,30 @@ export const RetroPinball: React.FC = () => {
     // Game state refs (to avoid re-renders)
     const balls = useRef<Ball[]>([]);
     const flippers = useRef<Flipper[]>([
-        { side: 'left', angle: 0.3, targetAngle: 0.3, x: 130, y: 540, length: 70, width: 12 },
-        { side: 'right', angle: Math.PI - 0.3, targetAngle: Math.PI - 0.3, x: 270, y: 540, length: 70, width: 12 }
+        { side: 'left', angle: 0.3, targetAngle: 0.3, x: 120, y: 560, length: 70, width: 12 },
+        { side: 'right', angle: Math.PI - 0.3, targetAngle: Math.PI - 0.3, x: 280, y: 560, length: 70, width: 12 }
     ]);
     const bumpers = useRef<Bumper[]>([
-        { x: 100, y: 150, radius: 30, color: '#ff00ff', hitTime: 0 },
-        { x: 200, y: 100, radius: 30, color: '#00ffff', hitTime: 0 },
-        { x: 300, y: 150, radius: 30, color: '#ffff00', hitTime: 0 }
+        { x: 100, y: 200, radius: 32, color: '#ff00ff', hitTime: 0 },
+        { x: 200, y: 150, radius: 32, color: '#00ffff', hitTime: 0 },
+        { x: 300, y: 200, radius: 32, color: '#ffff00', hitTime: 0 }
     ]);
 
     // 壁の定義（ファネル形状とシューターレーン）
     const walls = useRef([
-        { x1: 0, y1: 450, x2: 110, y2: 530 },   // Left Funnel
-        { x1: 370, y1: 450, x2: 290, y2: 530 }, // Right Funnel (シューターレーンを避けるため370開始)
-        { x1: 370, y1: 600, x2: 370, y2: 150 }  // Shooter Lane Wall
+        { x1: 0, y1: 480, x2: 100, y2: 560 },   // Left Funnel
+        { x1: 370, y1: 480, x2: 300, y2: 560 }, // Right Funnel
+        { x1: 370, y1: 600, x2: 370, y2: 200 }  // Shooter Lane Wall
     ]);
 
     // 丸型（卵型）天井のセグメントを生成
     useEffect(() => {
         const segments = [];
-        const centerX = 185; // (0 + 370) / 2
-        const centerY = 150;
-        const radiusX = 185;
-        const radiusY = 150;
-        const count = 10;
+        const centerX = 200; // 盤面全体(400)の中央
+        const centerY = 200;
+        const radiusX = 200; // 端から端まで
+        const radiusY = 200;
+        const count = 16;
         for (let i = 0; i <= count; i++) {
             const angle1 = Math.PI + (i / count) * Math.PI;
             const angle2 = Math.PI + ((i + 1) / count) * Math.PI;
@@ -76,16 +76,16 @@ export const RetroPinball: React.FC = () => {
         walls.current = [...walls.current, ...segments];
     }, []);
 
-    const GRAVITY = 0.25;
-    const FRICTION = 0.995;
-    const BOUNCE = 0.7;
+    const GRAVITY = 0.28;
+    const FRICTION = 0.996;
+    const BOUNCE = 0.65;
 
     const launchBall = () => {
         balls.current.push({
             x: 385,
             y: 580,
-            vx: -2,
-            vy: -16 - Math.random() * 2,
+            vx: 0,
+            vy: -22 - Math.random() * 5, // 射出力を強化
             radius: 8,
             color: '#ffffff',
             isGlitching: false
