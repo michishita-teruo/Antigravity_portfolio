@@ -22,7 +22,9 @@ echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}" >> .env
 
 ### 3. デプロイ設定の最適化
 - **REMOTE_TARGET**: サーバー上の正確な公開ディレクトリを指定。
+- **海外IP制限の回避**: GitHub Actions の IP がサーバー側で制限されている場合、セキュリティ設定の緩和や特定 IP のホワイトリスト化を検討する。
 - **PORT**: デフォルト (22) 以外（例: CloudFree の 10022）の場合は明示的に設定。
+- **SSH**: `StrictHostKeyChecking: no` を検討し、対話的プロンプトを回避する。
 - **SOURCE**: `dist/` ディレクトリのみを転送対象とする。
 
 ## 🛠 トラブルシューティング

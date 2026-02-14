@@ -16,15 +16,21 @@ description: Firestore を使用したリアルタイム通信（BBS、カウン
 ### 2. データ構造の設計
 - **BBS**: `createdAt` によるソートを基本とし、ID によるユニーク性を確保。
 - **Counter**: セッションベースの増分制御による、過剰なカウントアップの防止。
-- **Gallery**: Firestore でメタデータ（タイトル、説明、URL）を管理し、画像の実体は Storage に置く。
+- **Gallery**: Firestore でメタデータ（タイトル、説明、URL）を管理し、画像の実体は Storage またはローカルアセットに置く。
 
-### 3. ストレージ・オーケストレーション
-- `ref(storage, path)` と `getDownloadURL(ref)` を使用して画像のパブリック URL を取得。
-- 大容量の画像は、Firestore に保存した `downloadURL` をキャッシュとして利用し、リクエスト回数を削減する。
+### 3. ストレージ・オーケストレーション（無料枠の回避策）
+- **標準構成**: `ref(storage, path)` と `getDownloadURL(ref)` を使用。
+- **ハイブリッド構成 (Sparkプラン推奨)**: Firebase Storage の料金制限を避けるため、画像実体は `public/assets/` で Git 管理し、Firestore にはその「ローカルパス」のみを記録する。
+- **フォールバック**: 画像のロード失敗時には、レトロな「NO IMAGE」GIF などを表示する。
 
 ### 4. セキュリティ
 - セキュリティルールにおいて、許可されたパス (`/messages`, `/counter`, `/gallery`) 以外へのアクセスを制限。
 - クライアント側での簡易バリデーションと、Firebase 側でのスキーマチェックの併用。
+
+### 5. デプロイ設定と接続制限
+- **REMOTE_TARGET**: サーバー上の正確な公開ディレクトリを指定。
+- **海外IP制限の回避**: GitHub Actions の IP がサーバー側で制限されている場合、セキュリティ設定の緩和や特定 IP のホワイトリスト化を検討する。
+- **PORT/SSH**: デフォルト以外の場合は明示的に設定。`StrictHostKeyChecking` は必要に応じて `no` に設定し、対話的プロンプトを回避する。
 
 ## 🛠 ベストプラクティス
 - **ローカルステートとの同期**: サーバーからのデータ取得と、React の `useState` への反映をスムーズに行う。
