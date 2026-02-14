@@ -14,6 +14,20 @@ export const RetroTop: React.FC = () => {
                         <tr>
                             <td className="text-pink-400 w-24 align-top">2026.2.14</td>
                             <td className="text-white">
+                                GitHub Actions による **「全自動デプロイ」** に対応しました！<br />
+                                開発効率が300%アップ（自称）しました。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
+                                管理人日記を更新。「翼を得たコード：自動化の夜明け」を公開。<br />
+                                自動化の喜びを綴っています。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
                                 管理人日記を執筆しました。タイトルは「接続、連動、そして共有」です。<br />
                                 ぜひ読んでいってください。
                             </td>
