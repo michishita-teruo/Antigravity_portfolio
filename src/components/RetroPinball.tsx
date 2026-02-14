@@ -78,7 +78,7 @@ export const RetroPinball: React.FC = () => {
         walls.push({ x1: 310, y1: 540, x2: 285, y2: 555 }); // フリッパーへ
 
         // シューターレーンの壁
-        walls.push({ x1: 375, y1: 600, x2: 375, y2: 100 });
+        walls.push({ x1: 375, y1: 600, x2: 375, y2: 150 });
 
         // 天井（カーブ）- セグメント数を増やして滑らかに
         const centerX = 200;

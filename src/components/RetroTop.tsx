@@ -13,6 +13,20 @@ export const RetroTop: React.FC = () => {
                 <table className="w-full">
                     <tbody>
                         <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.15</td>
+                            <td className="text-white font-bold">
+                                管理人日記を更新。「物理演算の深淵：ピンボール開発奮闘記」を公開。<br />
+                                物理の沼にハマった管理人の、愛と苦悩の記録です。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.15</td>
+                            <td className="text-white">
+                                ピンボール場、微調整のため「β版（不時着版）」として稼働中！🚧<br />
+                                物理の限界に挑む管理人の勇姿（？）をご覧ください。
+                            </td>
+                        </tr>
+                        <tr>
                             <td className="text-pink-400 w-24 align-top">2026.2.14</td>
                             <td className="text-white font-bold">
                                 【祝】管理人アート展示室「Retro Gallery」が正式オープンしました！<br />
