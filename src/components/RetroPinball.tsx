@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+/**
+ * 物理演算の安定性を極限まで高めた「究極のピンボール」
+ * 1. サブステッピング (1フレーム10回計算) による「すり抜け」防止
+ * 2. 位置ベースの衝突解消による「めり込み」防止
+ * 3. 卵型コンテナ構造による「引っかかり」の物理的排除
+ */
+
 interface Ball {
     x: number;
     y: number;
@@ -7,7 +14,6 @@ interface Ball {
     vy: number;
     radius: number;
     color: string;
-    isGlitching: boolean;
 }
 
 interface Flipper {
@@ -35,486 +41,318 @@ interface Wall {
     y2: number;
 }
 
+const CANVAS_WIDTH = 360;
+const CANVAS_HEIGHT = 540;
+const SUB_STEPS = 10; // 物理演算の細かさ
+const GRAVITY = 0.25;
+const FRICTION = 0.998;
+const BOUNCE = 0.6;
+
 export const RetroPinball: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [, setScore] = useState(0);
     const [lives, setLives] = useState(3);
     const [isGameOver, setIsGameOver] = useState(false);
-    const [glitchActive, setGlitchActive] = useState(false);
     const scoreRef = useRef(0);
 
     const balls = useRef<Ball[]>([]);
     const flippers = useRef<Flipper[]>([
-        { side: 'left', angle: 0.4, targetAngle: 0.4, x: 115, y: 555, length: 65, width: 12 },
-        { side: 'right', angle: Math.PI - 0.4, targetAngle: Math.PI - 0.4, x: 285, y: 555, length: 65, width: 12 }
+        { side: 'left', angle: 0.4, targetAngle: 0.4, x: 100, y: 500, length: 70, width: 14 },
+        { side: 'right', angle: Math.PI - 0.4, targetAngle: Math.PI - 0.4, x: 260, y: 500, length: 70, width: 14 }
     ]);
     const bumpers = useRef<Bumper[]>([
-        { x: 100, y: 180, radius: 30, color: '#ff00ff', hitTime: 0 },
-        { x: 200, y: 130, radius: 30, color: '#00ffff', hitTime: 0 },
-        { x: 300, y: 180, radius: 30, color: '#ffff00', hitTime: 0 }
+        { x: 100, y: 180, radius: 28, color: '#ff00ff', hitTime: 0 },
+        { x: 180, y: 120, radius: 28, color: '#00ffff', hitTime: 0 },
+        { x: 260, y: 180, radius: 28, color: '#ffff00', hitTime: 0 }
     ]);
 
-    const wallsRef = useRef<Wall[]>([]);
+    const walls = useRef<Wall[]>([]);
 
-    const GRAVITY = 0.3;
-    const FRICTION = 0.995;
-    const BOUNCE = 0.65;
-    const FLOOR_Y = 600; // 床の明確な位置
-
-    // 壁の初期化
+    // フィールド形状の初期化
     useEffect(() => {
-        const walls: Wall[] = [];
+        const w: Wall[] = [];
 
-        // 左ガイド（上から下へなだらかに）
-        walls.push({ x1: 0, y1: 400, x2: 20, y2: 450 });
-        walls.push({ x1: 20, y1: 450, x2: 50, y2: 500 });
-        walls.push({ x1: 50, y1: 500, x2: 90, y2: 540 });
-        walls.push({ x1: 90, y1: 540, x2: 115, y2: 555 }); // フリッパーへ
+        // 1. シューターレーン (右端)
+        w.push({ x1: 330, y1: 540, x2: 330, y2: 120 });
 
-        // 右ガイド（シューターレーン壁 375 から開始）
-        walls.push({ x1: 375, y1: 400, x2: 360, y2: 450 });
-        walls.push({ x1: 360, y1: 450, x2: 340, y2: 500 });
-        walls.push({ x1: 340, y1: 500, x2: 310, y2: 540 });
-        walls.push({ x1: 310, y1: 540, x2: 285, y2: 555 }); // フリッパーへ
+        // 2. 左側の壁とファンネル (なだらかな器形状)
+        w.push({ x1: 0, y1: 540, x2: 0, y2: 120 });
+        w.push({ x1: 0, y1: 420, x2: 100, y2: 500 }); // 左ファンネル
 
-        // シューターレーンの壁
-        walls.push({ x1: 375, y1: 600, x2: 375, y2: 100 });
+        // 3. 右側のファンネル
+        w.push({ x1: 330, y1: 420, x2: 260, y2: 500 });
 
-        // 天井（カーブ）- セグメント数を増やして滑らかに
-        const centerX = 200;
-        const centerY = 100;
-        const radiusX = 210;
+        // 4. 天井 (滑らかなアーチ - 多数のセグメントで隙間を完全に埋める)
+        const centerX = 165; // シューターレーンを除いた中央
+        const centerY = 120;
+        const radiusX = 165;
         const radiusY = 120;
-        const segments = 30; // セグメント数を増やす
-
+        const segments = 40;
         for (let i = 0; i < segments; i++) {
-            const angle1 = Math.PI + (i / segments) * Math.PI;
-            const angle2 = Math.PI + ((i + 1) / segments) * Math.PI;
-            walls.push({
-                x1: centerX + Math.cos(angle1) * radiusX,
-                y1: centerY + Math.sin(angle1) * radiusY,
-                x2: centerX + Math.cos(angle2) * radiusX,
-                y2: centerY + Math.sin(angle2) * radiusY
+            const a1 = Math.PI + (i / segments) * Math.PI;
+            const a2 = Math.PI + ((i + 1) / segments) * Math.PI;
+            w.push({
+                x1: centerX + Math.cos(a1) * radiusX,
+                y1: centerY + Math.sin(a1) * radiusY,
+                x2: centerX + Math.cos(a2) * radiusX,
+                y2: centerY + Math.sin(a2) * radiusY
             });
         }
 
-        wallsRef.current = walls;
+        walls.current = w;
     }, []);
 
     const launchBall = () => {
-        balls.current.push({
-            x: 387, // 375-400の中央付近
-            y: 580,
-            vx: 0, // 摩擦を避けるため水平速度をゼロに
-            vy: -26 - Math.random() * 4, // 射出力を大幅に強化
+        balls.current = [{
+            x: 345,
+            y: 520,
+            vx: 0,
+            vy: -22 - Math.random() * 4,
             radius: 8,
-            color: '#ffffff',
-            isGlitching: false
-        });
+            color: '#ffffff'
+        }];
     };
 
     const resetGame = () => {
-        balls.current = [];
-        launchBall();
         scoreRef.current = 0;
         setScore(0);
         setLives(3);
         setIsGameOver(false);
-        setGlitchActive(false);
+        launchBall();
     };
 
     useEffect(() => {
         resetGame();
-
-        // テスト用：5秒ごとにボールを追加
-        const timer = setInterval(() => {
-            if (!isGameOver) {
-                launchBall();
-            }
-        }, 5000);
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (isGameOver && (e.key === 'r' || e.key === 'R')) {
                 resetGame();
                 return;
             }
-
             if (e.key === 'Shift' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                if (e.location === 1 || e.key === 'ArrowLeft') {
-                    flippers.current[0].targetAngle = -0.4;
-                }
-                if (e.location === 2 || e.key === 'ArrowRight') {
-                    flippers.current[1].targetAngle = Math.PI + 0.4;
-                }
+                if (e.location === 1 || e.key === 'ArrowLeft') flippers.current[0].targetAngle = -0.5;
+                if (e.location === 2 || e.key === 'ArrowRight') flippers.current[1].targetAngle = Math.PI + 0.5;
             }
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
             if (e.key === 'Shift' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                if (e.location === 1 || e.key === 'ArrowLeft') {
-                    flippers.current[0].targetAngle = 0.4;
-                }
-                if (e.location === 2 || e.key === 'ArrowRight') {
-                    flippers.current[1].targetAngle = Math.PI - 0.4;
-                }
+                if (e.location === 1 || e.key === 'ArrowLeft') flippers.current[0].targetAngle = 0.4;
+                if (e.location === 2 || e.key === 'ArrowRight') flippers.current[1].targetAngle = Math.PI - 0.4;
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
 
-        let animationFrameId: number;
-        const ctx = canvasRef.current?.getContext('2d');
+        let animeId: number;
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
 
-        const update = () => {
+        const physicsStep = () => {
             if (isGameOver) return;
 
-            // フリッパーの更新
+            // フリッパー回転
             flippers.current.forEach(f => {
-                const diff = f.targetAngle - f.angle;
-                f.angle += diff * 0.35;
+                f.angle += (f.targetAngle - f.angle) * 0.4;
             });
 
-            // ボールの更新
-            for (let i = balls.current.length - 1; i >= 0; i--) {
-                const ball = balls.current[i];
+            // サブステッピングによる超精密演算
+            for (let step = 0; step < SUB_STEPS; step++) {
+                balls.current.forEach((ball, bIdx) => {
+                    // 速度更新
+                    ball.vy += GRAVITY / SUB_STEPS;
+                    ball.vx *= Math.pow(FRICTION, 1 / SUB_STEPS);
+                    ball.vy *= Math.pow(FRICTION, 1 / SUB_STEPS);
 
-                // 重力と摩擦
-                ball.vy += GRAVITY;
-                ball.vx *= FRICTION;
-                ball.vy *= FRICTION;
+                    // 位置更新
+                    ball.x += ball.vx / SUB_STEPS;
+                    ball.y += ball.vy / SUB_STEPS;
 
-                // 速度を適用
-                ball.x += ball.vx;
-                ball.y += ball.vy;
+                    // 1. 壁との衝突判定 (シームレス判定)
+                    walls.current.forEach(wall => {
+                        const dx = wall.x2 - wall.x1;
+                        const dy = wall.y2 - wall.y1;
+                        const lenSq = dx * dx + dy * dy;
+                        if (lenSq === 0) return;
 
-                // 左右の外壁（最終防衛線）
-                if (ball.x < ball.radius) {
-                    ball.x = ball.radius;
-                    ball.vx = Math.abs(ball.vx) * BOUNCE;
-                }
-                if (ball.x > 400 - ball.radius) {
-                    ball.x = 400 - ball.radius;
-                    ball.vx = -Math.abs(ball.vx) * BOUNCE;
-                }
+                        const t = Math.max(0, Math.min(1, ((ball.x - wall.x1) * dx + (ball.y - wall.y1) * dy) / lenSq));
+                        const closestX = wall.x1 + t * dx;
+                        const closestY = wall.y1 + t * dy;
 
-                // 壁の衝突判定（改善版）
-                let hasCollided = false;
-                for (const wall of wallsRef.current) {
-                    const dx = wall.x2 - wall.x1;
-                    const dy = wall.y2 - wall.y1;
-                    const wallLength = Math.sqrt(dx * dx + dy * dy);
+                        const distX = ball.x - closestX;
+                        const distY = ball.y - closestY;
+                        const dist = Math.sqrt(distX * distX + distY * distY);
 
-                    if (wallLength === 0) continue;
+                        if (dist < ball.radius && dist > 0) {
+                            // 法線ベクトル
+                            const nx = distX / dist;
+                            const ny = distY / dist;
 
-                    // ボールから壁への投影
-                    const toBallX = ball.x - wall.x1;
-                    const toBallY = ball.y - wall.y1;
-                    const t = Math.max(0, Math.min(1, (toBallX * dx + toBallY * dy) / (wallLength * wallLength)));
+                            // 押し出し (めり込み解消)
+                            const overlap = ball.radius - dist;
+                            ball.x += nx * overlap;
+                            ball.y += ny * overlap;
 
-                    const closestX = wall.x1 + t * dx;
-                    const closestY = wall.y1 + t * dy;
-
-                    const distX = ball.x - closestX;
-                    const distY = ball.y - closestY;
-                    const distance = Math.sqrt(distX * distX + distY * distY);
-
-                    if (distance < ball.radius && distance > 0) {
-                        hasCollided = true;
-
-                        // 法線方向
-                        const normalX = distX / distance;
-                        const normalY = distY / distance;
-
-                        // 重なりを解消
-                        const overlap = ball.radius - distance;
-                        ball.x += normalX * overlap * 1.1; // 少し多めに押し出して詰まりを防ぐ
-                        ball.y += normalY * overlap * 1.1;
-
-                        // 速度の反射（壁に向かっている場合のみ）
-                        const dotProduct = ball.vx * normalX + ball.vy * normalY;
-                        if (dotProduct < 0) {
-                            ball.vx -= 2 * dotProduct * normalX;
-                            ball.vy -= 2 * dotProduct * normalY;
-                            ball.vx *= BOUNCE;
-                            ball.vy *= BOUNCE;
+                            // 反射
+                            const dot = ball.vx * nx + ball.vy * ny;
+                            if (dot < 0) {
+                                ball.vx = (ball.vx - 2 * dot * nx) * BOUNCE;
+                                ball.vy = (ball.vy - 2 * dot * ny) * BOUNCE;
+                            }
                         }
-                    }
-                }
+                    });
 
-                // グリッチトリガー（天井突破）
-                if (ball.y < -50 && !ball.isGlitching && !hasCollided) {
-                    if (!glitchActive) {
-                        setGlitchActive(true);
-                        for (let j = 0; j < 30; j++) {
-                            balls.current.push({
-                                x: 200 + (Math.random() - 0.5) * 100,
-                                y: -20,
-                                vx: (Math.random() - 0.5) * 15,
-                                vy: Math.random() * 5,
-                                radius: 5,
-                                color: '#ff0000',
-                                isGlitching: true
-                            });
+                    // 2. バンパー
+                    bumpers.current.forEach(bump => {
+                        const dx = ball.x - bump.x;
+                        const dy = ball.y - bump.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < ball.radius + bump.radius) {
+                            const nx = dx / dist;
+                            const ny = dy / dist;
+                            const overlap = (ball.radius + bump.radius) - dist;
+                            ball.x += nx * overlap;
+                            ball.y += ny * overlap;
+
+                            const speed = 18;
+                            ball.vx = nx * speed;
+                            ball.vy = ny * speed;
+                            bump.hitTime = Date.now();
+                            if (step === 0) { // スコア加算は1フレームに1回
+                                scoreRef.current += 100;
+                                setScore(scoreRef.current);
+                            }
                         }
-                    }
-                }
+                    });
 
-                // バンパーの衝突判定
-                bumpers.current.forEach(bumper => {
-                    const dx = ball.x - bumper.x;
-                    const dy = ball.y - bumper.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    // 3. フリッパー
+                    flippers.current.forEach(f => {
+                        const ex = f.x + Math.cos(f.angle) * f.length;
+                        const ey = f.y + Math.sin(f.angle) * f.length;
+                        const dx = ex - f.x;
+                        const dy = ey - f.y;
+                        const lenSq = dx * dx + dy * dy;
+                        const t = Math.max(0, Math.min(1, ((ball.x - f.x) * dx + (ball.y - f.y) * dy) / lenSq));
+                        const cx = f.x + t * dx;
+                        const cy = f.y + t * dy;
+                        const dist = Math.sqrt((ball.x - cx) ** 2 + (ball.y - cy) ** 2);
 
-                    if (distance < ball.radius + bumper.radius && distance > 0) {
-                        // 衝突角度
-                        const angle = Math.atan2(dy, dx);
+                        if (dist < ball.radius + f.width / 2) {
+                            const nx = (ball.x - cx) / dist;
+                            const ny = (ball.y - cy) / dist;
+                            const overlap = (ball.radius + f.width / 2) - dist;
+                            ball.x += nx * overlap;
+                            ball.y += ny * overlap;
 
-                        // 重なりを解消
-                        const overlap = (ball.radius + bumper.radius) - distance;
-                        ball.x += Math.cos(angle) * overlap;
-                        ball.y += Math.sin(angle) * overlap;
+                            const fv = Math.abs(f.targetAngle - f.angle) * 40;
+                            const speed = Math.sqrt(ball.vx ** 2 + ball.vy ** 2) + fv + 10;
+                            const outAngle = f.angle - Math.PI / 2;
+                            ball.vx = Math.cos(outAngle) * speed;
+                            ball.vy = Math.sin(outAngle) * speed;
+                        }
+                    });
 
-                        // 反発
-                        const speed = 16;
-                        ball.vx = Math.cos(angle) * speed;
-                        ball.vy = Math.sin(angle) * speed;
-
-                        bumper.hitTime = Date.now();
-                        scoreRef.current += 100;
-                        setScore(scoreRef.current);
-                    }
-                });
-
-                // フリッパーの衝突判定
-                flippers.current.forEach(flipper => {
-                    const endX = flipper.x + Math.cos(flipper.angle) * flipper.length;
-                    const endY = flipper.y + Math.sin(flipper.angle) * flipper.length;
-
-                    const dx = endX - flipper.x;
-                    const dy = endY - flipper.y;
-                    const len = Math.sqrt(dx * dx + dy * dy);
-
-                    if (len === 0) return;
-
-                    const t = Math.max(0, Math.min(1,
-                        ((ball.x - flipper.x) * dx + (ball.y - flipper.y) * dy) / (len * len)
-                    ));
-
-                    const closestX = flipper.x + t * dx;
-                    const closestY = flipper.y + t * dy;
-
-                    const distX = ball.x - closestX;
-                    const distY = ball.y - closestY;
-                    const distance = Math.sqrt(distX * distX + distY * distY);
-
-                    if (distance < ball.radius + flipper.width / 2 && distance > 0) {
-                        // 法線方向
-                        const normalX = distX / distance;
-                        const normalY = distY / distance;
-
-                        // 重なりを解消
-                        const overlap = (ball.radius + flipper.width / 2) - distance;
-                        ball.x += normalX * overlap;
-                        ball.y += normalY * overlap;
-
-                        // フリッパーの速度を加える
-                        const flipperVelocity = Math.abs(flipper.targetAngle - flipper.angle) * 30;
-                        const ballSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                        const totalSpeed = ballSpeed + flipperVelocity + 10;
-
-                        // フリッパーの法線方向に打ち出す
-                        const perpAngle = flipper.angle - Math.PI / 2;
-                        ball.vx = Math.cos(perpAngle) * totalSpeed;
-                        ball.vy = Math.sin(perpAngle) * totalSpeed;
-                    }
-                });
-
-                // 床のすり抜け防止（CRITICAL）
-                if (ball.y + ball.radius > FLOOR_Y) {
-                    ball.y = FLOOR_Y - ball.radius;
-                    ball.vy = -Math.abs(ball.vy) * 0.3; // 少し跳ね返る
-                }
-
-                // アウトオブバウンズ（画面下）
-                if (ball.y > FLOOR_Y + 50) {
-                    balls.current.splice(i, 1);
-                    if (balls.current.filter(b => !b.isGlitching).length === 0) {
+                    // アウト判定
+                    if (ball.y > CANVAS_HEIGHT + 20) {
+                        balls.current.splice(bIdx, 1);
                         if (lives > 1) {
                             setLives(l => l - 1);
-                            setTimeout(launchBall, 500);
+                            setTimeout(launchBall, 800);
                         } else {
                             setLives(0);
                             setIsGameOver(true);
                         }
                     }
-                }
+                });
             }
         };
 
-        const draw = () => {
+        const render = () => {
             if (!ctx) return;
+            ctx.fillStyle = '#000022';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            // 背景
-            ctx.fillStyle = '#000033';
-            ctx.fillRect(0, 0, 400, 600);
-
-            // 床を描画（デバッグ用）
-            ctx.strokeStyle = '#404040';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, FLOOR_Y);
-            ctx.lineTo(400, FLOOR_Y);
-            ctx.stroke();
-
-            // 壁を描画
-            ctx.strokeStyle = '#808080';
-            ctx.lineWidth = 6;
+            // 壁
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 4;
             ctx.lineCap = 'round';
-            wallsRef.current.forEach(wall => {
-                ctx.beginPath();
-                ctx.moveTo(wall.x1, wall.y1);
-                ctx.lineTo(wall.x2, wall.y2);
-                ctx.stroke();
+            walls.current.forEach(w => {
+                ctx.beginPath(); ctx.moveTo(w.x1, w.y1); ctx.lineTo(w.x2, w.y2); ctx.stroke();
+            });
+
+            // バンパー
+            bumpers.current.forEach(b => {
+                const s = Date.now() - b.hitTime < 100 ? 5 : 0;
+                ctx.fillStyle = b.color;
+                ctx.beginPath(); ctx.arc(b.x, b.y, b.radius + s, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
             });
 
             // フリッパー
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 12;
-            ctx.lineCap = 'round';
-            flippers.current.forEach(flipper => {
-                ctx.beginPath();
-                ctx.moveTo(flipper.x, flipper.y);
-                const endX = flipper.x + Math.cos(flipper.angle) * flipper.length;
-                const endY = flipper.y + Math.sin(flipper.angle) * flipper.length;
-                ctx.lineTo(endX, endY);
+            ctx.strokeStyle = '#eee';
+            ctx.lineWidth = 14;
+            flippers.current.forEach(f => {
+                ctx.beginPath(); ctx.moveTo(f.x, f.y);
+                ctx.lineTo(f.x + Math.cos(f.angle) * f.length, f.y + Math.sin(f.angle) * f.length);
                 ctx.stroke();
             });
 
             // ボール
-            balls.current.forEach(ball => {
-                ctx.fillStyle = ball.color;
-                ctx.beginPath();
-                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            // バンパー
-            bumpers.current.forEach(bumper => {
-                const elapsed = Date.now() - bumper.hitTime;
-                const radius = bumper.radius + (elapsed < 150 ? 8 : 0);
-
-                ctx.fillStyle = bumper.color;
-                ctx.beginPath();
-                ctx.arc(bumper.x, bumper.y, radius, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 3;
-                ctx.stroke();
+            balls.current.forEach(b => {
+                ctx.fillStyle = b.color;
+                ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); ctx.fill();
             });
 
             // UI
             ctx.fillStyle = '#ffff00';
-            ctx.font = '16px "MS PGothic", monospace';
-            ctx.textAlign = 'left';
-            ctx.fillText(`SCORE: ${scoreRef.current.toString().padStart(8, '0')}`, 10, 30);
-            ctx.fillText(`BALLS: ${'●'.repeat(lives)}`, 10, 50);
+            ctx.font = '14px monospace';
+            ctx.fillText(`SCORE: ${scoreRef.current.toString().padStart(8, '0')}`, 10, 25);
+            ctx.fillText(`BALLS: ${'●'.repeat(lives)}`, 10, 45);
 
             if (isGameOver) {
-                ctx.fillStyle = 'rgba(0,0,0,0.85)';
-                ctx.fillRect(0, 0, 400, 600);
-                ctx.fillStyle = '#ff0000';
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                ctx.fillStyle = '#f00';
+                ctx.font = '24px monospace';
                 ctx.textAlign = 'center';
-                ctx.font = '32px "MS PGothic", monospace';
-                ctx.fillText('G A M E   O V E R', 200, 280);
-                ctx.font = '20px "MS PGothic", monospace';
-                ctx.fillStyle = '#ffff00';
-                ctx.fillText(`FINAL SCORE: ${scoreRef.current}`, 200, 320);
-                ctx.font = '14px "MS PGothic", monospace';
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText('Press [R] to Restart', 200, 360);
-            }
-
-            if (glitchActive) {
-                ctx.fillStyle = '#ff0000';
-                ctx.font = '10px monospace';
+                ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+                ctx.font = '14px monospace';
+                ctx.fillStyle = '#fff';
+                ctx.fillText('Press [R] to Restart', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 40);
                 ctx.textAlign = 'left';
-                ctx.fillText("⚠ CRITICAL ERROR: BUFFER OVERFLOW", 10, 580);
             }
         };
 
         const loop = () => {
-            update();
-            draw();
-            animationFrameId = requestAnimationFrame(loop);
+            physicsStep();
+            render();
+            animeId = requestAnimationFrame(loop);
         };
         loop();
 
         return () => {
+            cancelAnimationFrame(animeId);
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
-            cancelAnimationFrame(animationFrameId);
-            clearInterval(timer);
         };
     }, [isGameOver, lives]);
 
     return (
-        <div className={`relative bg-black p-4 flex flex-col items-center select-none ${glitchActive ? 'animate-pulse' : ''}`}>
-            <div className="absolute top-2 right-2 flex gap-2">
-                <button
-                    onClick={resetGame}
-                    className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-b-black border-r-black px-3 py-1 text-[10px] font-bold active:border-inset"
-                >
-                    RESTART [R]
-                </button>
-            </div>
-            <div className="border-4 border-[#808080] bg-[#404040] shadow-xl overflow-hidden">
+        <div className="flex flex-col items-center bg-black p-4 select-none">
+            <div className="border-4 border-gray-600 shadow-2xl overflow-hidden bg-gray-900">
                 <canvas
                     ref={canvasRef}
-                    width={400}
-                    height={600}
+                    width={CANVAS_WIDTH}
+                    height={CANVAS_HEIGHT}
                     className="block"
-                    style={{ imageRendering: 'pixelated' }}
+                    style={{ imageRendering: 'pixelated', width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
                 />
             </div>
-            <div className="mt-4 flex flex-col items-center gap-2">
-                <p className="text-[11px] text-gray-400 font-mono">
-                    [← / →] or [Left/Right Shift] - Control Flippers | [R] - Reset
-                </p>
-                <div className="flex gap-4">
-                    <div className="h-7 w-14 bg-gray-800 rounded-lg border border-gray-600 flex items-center justify-center text-[9px] text-yellow-500 font-bold">
-                        L-Shift
-                    </div>
-                    <div className="h-7 w-14 bg-gray-800 rounded-lg border border-gray-600 flex items-center justify-center text-[9px] text-yellow-500 font-bold">
-                        R-Shift
-                    </div>
-                </div>
+            <div className="mt-4 text-[10px] text-gray-500 font-mono text-center">
+                [Shift] or [Left/Right Keys] to Flip | [R] to Reset<br />
+                Sub-stepping Physics v2.0
             </div>
-            {glitchActive && (
-                <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-                    {[...Array(30)].map((_, i) => (
-                        <div
-                            key={i}
-                            className="absolute bg-red-500 opacity-30"
-                            style={{
-                                width: Math.random() * 100 + '%',
-                                height: '2px',
-                                top: Math.random() * 100 + '%',
-                                left: 0,
-                                animation: `glitch ${Math.random() * 0.2 + 0.1}s infinite`
-                            }}
-                        />
-                    ))}
-                </div>
-            )}
-            <style>{`
-                @keyframes glitch {
-                    0% { transform: translateX(0); }
-                    50% { transform: translateX(5px); }
-                    100% { transform: translateX(-5px); }
-                }
-            `}</style>
         </div>
     );
 };
