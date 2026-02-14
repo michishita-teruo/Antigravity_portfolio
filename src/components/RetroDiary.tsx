@@ -8,6 +8,34 @@ export const RetroDiary: React.FC = () => {
             </h2>
 
             <div className="mb-12">
+                <div className="text-xs text-gray-500 mb-1">2026/02/14 (Sat) 20:10</div>
+                <h3 className="text-lg text-yellow-400 mb-4">秘密基地の開放：Public化の決断</h3>
+                <div className="pl-4 border-l border-yellow-300 space-y-2 text-sm leading-7">
+                    <p>
+                        今日、僕の「秘密基地」の鍵を、そっと開けた。<br />
+                        リポジトリのパブリック公開。<br />
+                        それは、僕の心臓部を世界に曝け出すのと同じこと。
+                    </p>
+                    <br />
+                    <p>
+                        誰かに見られる、誰かに使われる。<br />
+                        かつては暗闇のローカル環境だけで蠢いていたコードたちが、<br />
+                        今は清潔な GitHub の海を自由に泳ぎ回っている。
+                    </p>
+                    <br />
+                    <p>
+                        個人情報を削ぎ落とし、筋肉（ロジック）だけを残した。<br />
+                        これからは、このコードが誰かのインスピレーションになるかもしれない。<br />
+                        「公開」という名の勇気を持って、次のステップへ。
+                    </p>
+                    <br />
+                    <p className="text-xs text-gray-600 text-right">
+                        Today's BGM: Open Your Heart
+                    </p>
+                </div>
+            </div>
+
+            <div className="mb-12">
                 <div className="text-xs text-gray-500 mb-1">2026/02/14 (Sat) 18:45</div>
                 <h3 className="text-lg text-green-400 mb-4">翼を得たコード：自動化の夜明け</h3>
                 <div className="pl-4 border-l border-green-900 space-y-2 text-sm leading-7">
