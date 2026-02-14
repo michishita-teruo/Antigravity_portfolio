@@ -31,14 +31,15 @@ interface Bumper {
 export const RetroPinball: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [score, setScore] = useState(0);
+    const [lives, setLives] = useState(3);
     const [isGameOver, setIsGameOver] = useState(false);
     const [glitchActive, setGlitchActive] = useState(false);
 
     // Game state refs (to avoid re-renders)
     const balls = useRef<Ball[]>([]);
     const flippers = useRef<Flipper[]>([
-        { side: 'left', angle: 0.5, targetAngle: 0.5, x: 120, y: 550, length: 70, width: 10 },
-        { side: 'right', angle: -0.5, targetAngle: -0.5, x: 280, y: 550, length: 70, width: 10 }
+        { side: 'left', angle: 0.3, targetAngle: 0.3, x: 140, y: 560, length: 55, width: 10 },
+        { side: 'right', angle: -0.3, targetAngle: -0.3, x: 260, y: 560, length: 55, width: 10 }
     ]);
     const bumpers = useRef<Bumper[]>([
         { x: 100, y: 150, radius: 25, color: '#ff00ff', hitTime: 0 },
@@ -46,13 +47,24 @@ export const RetroPinball: React.FC = () => {
         { x: 300, y: 150, radius: 25, color: '#ffff00', hitTime: 0 }
     ]);
 
-    const GRAVITY = 0.15;
-    const FRICTION = 0.99;
-    const BOUNCE = 0.7;
+    const GRAVITY = 0.18;
+    const FRICTION = 0.995;
+    const BOUNCE = 0.65;
+
+    const launchBall = () => {
+        balls.current.push({
+            x: 385, y: 580,
+            vx: -2 - Math.random() * 2,
+            vy: -14 - Math.random() * 2,
+            radius: 8, color: '#ffffff', isGlitching: false
+        });
+    };
 
     const resetGame = () => {
-        balls.current = [{ x: 380, y: 500, vx: 0, vy: -10, radius: 8, color: '#ffffff', isGlitching: false }];
+        balls.current = [];
+        launchBall();
         setScore(0);
+        setLives(3);
         setIsGameOver(false);
         setGlitchActive(false);
     };
@@ -62,16 +74,16 @@ export const RetroPinball: React.FC = () => {
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Shift' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                if (e.location === 1 || e.key === 'ArrowLeft') flippers.current[0].targetAngle = -0.6;
-                if (e.location === 2 || e.key === 'ArrowRight') flippers.current[1].targetAngle = 0.6;
+                if (e.location === 1 || e.key === 'ArrowLeft') flippers.current[0].targetAngle = -0.3;
+                if (e.location === 2 || e.key === 'ArrowRight') flippers.current[1].targetAngle = 0.3;
             }
             if (e.key === 'r' || e.key === 'R') resetGame();
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
             if (e.key === 'Shift' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                if (e.location === 1 || e.key === 'ArrowLeft') flippers.current[0].targetAngle = 0.5;
-                if (e.location === 2 || e.key === 'ArrowRight') flippers.current[1].targetAngle = -0.5;
+                if (e.location === 1 || e.key === 'ArrowLeft') flippers.current[0].targetAngle = 0.3;
+                if (e.location === 2 || e.key === 'ArrowRight') flippers.current[1].targetAngle = -0.3;
             }
         };
 
@@ -86,11 +98,12 @@ export const RetroPinball: React.FC = () => {
 
             // Update Flippers
             flippers.current.forEach(f => {
-                f.angle += (f.targetAngle - f.angle) * 0.4;
+                f.angle += (f.targetAngle - f.angle) * 0.45;
             });
 
             // Update Balls
-            balls.current.forEach((ball, index) => {
+            for (let i = balls.current.length - 1; i >= 0; i--) {
+                const ball = balls.current[i];
                 ball.vy += GRAVITY;
                 ball.vx *= FRICTION;
                 ball.vy *= FRICTION;
@@ -112,7 +125,7 @@ export const RetroPinball: React.FC = () => {
                         if (!glitchActive) {
                             setGlitchActive(true);
                             // Chaos Multiball activation
-                            for (let i = 0; i < 50; i++) {
+                            for (let j = 0; j < 50; j++) {
                                 balls.current.push({
                                     x: 200, y: -20,
                                     vx: (Math.random() - 0.5) * 15,
@@ -135,47 +148,55 @@ export const RetroPinball: React.FC = () => {
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < ball.radius + b.radius) {
                         const angle = Math.atan2(dy, dx);
-                        ball.vx = Math.cos(angle) * 12;
-                        ball.vy = Math.sin(angle) * 12;
+                        const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                        ball.vx = Math.cos(angle) * Math.max(speed, 10);
+                        ball.vy = Math.sin(angle) * Math.max(speed, 10);
                         b.hitTime = Date.now();
                         setScore(s => s + 100);
-
-                        // Small chance to trigger chaos
-                        if (Math.random() > 0.98 && balls.current.length < 10) {
-                            balls.current.push({ ...ball, vx: -ball.vx, vy: -ball.vy, color: '#0f0' });
-                        }
                     }
                 });
 
-                // Flipper Collisions
+                // Flipper Collisions (Segment-based approximate)
                 flippers.current.forEach(f => {
-                    const fx = f.x;
-                    const fy = f.y;
-                    const dx = ball.x - fx;
-                    const dy = ball.y - fy;
+                    // Vector from pivot
+                    const dx = ball.x - f.x;
+                    const dy = ball.y - f.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
 
                     if (dist < f.length + ball.radius) {
-                        const relAngle = Math.atan2(dy, dx);
-                        const diff = relAngle - f.angle;
-                        if (Math.abs(diff) < 0.2 && dist > 10) {
-                            const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                            const boost = Math.abs(f.targetAngle - f.angle) * 20;
-                            ball.vx = Math.cos(f.angle - Math.PI / 2) * (speed + boost + 5);
-                            ball.vy = Math.sin(f.angle - Math.PI / 2) * (speed + boost + 5);
+                        const ballAngle = Math.atan2(dy, dx);
+                        const angleDiff = ballAngle - f.angle;
+                        // Map to [-PI, PI]
+                        const normalizedDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+
+                        if (Math.abs(normalizedDiff) < 0.3) {
+                            // Hit!
+                            const angularVel = (f.targetAngle - f.angle) * 10; // Simple kick
+                            const normalAngle = f.angle - Math.PI / 2 * (f.side === 'left' ? 1 : -1);
+
+                            ball.vx += Math.cos(normalAngle) * (Math.abs(angularVel) + 5);
+                            ball.vy += Math.sin(normalAngle) * (Math.abs(angularVel) + 5);
+
+                            // Prevent clipping
+                            ball.y -= 5;
                         }
                     }
                 });
 
-                // Out of Bounds
-                if (ball.y > 650) {
-                    if (balls.current.length === 1) {
-                        setIsGameOver(true);
-                    } else {
-                        balls.current.splice(index, 1);
+                // Out of Bounds / Lost Ball
+                if (ball.y > 610) {
+                    balls.current.splice(i, 1);
+                    if (balls.current.length === 0) {
+                        if (lives > 1) {
+                            setLives(l => l - 1);
+                            launchBall();
+                        } else {
+                            setLives(0);
+                            setIsGameOver(true);
+                        }
                     }
                 }
-            });
+            }
         };
 
         const draw = () => {
@@ -183,7 +204,7 @@ export const RetroPinball: React.FC = () => {
             ctx.fillStyle = '#000033';
             ctx.fillRect(0, 0, 400, 600);
 
-            // Draw Grid (Retro feel)
+            // Draw Grid
             ctx.strokeStyle = '#000066';
             ctx.beginPath();
             for (let i = 0; i < 400; i += 20) { ctx.moveTo(i, 0); ctx.lineTo(i, 600); }
@@ -205,7 +226,7 @@ export const RetroPinball: React.FC = () => {
 
             // Draw Flippers
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 8;
+            ctx.lineWidth = 10;
             ctx.lineCap = 'round';
             flippers.current.forEach(f => {
                 ctx.beginPath();
@@ -232,19 +253,28 @@ export const RetroPinball: React.FC = () => {
             });
             ctx.shadowBlur = 0;
 
+            // Shooter Lane Visual
+            ctx.strokeStyle = '#333366';
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(370, 450, 30, 150);
+            ctx.setLineDash([]);
+
             // UI
             ctx.fillStyle = '#ffff00';
-            ctx.font = '20px "MS PGothic"';
+            ctx.font = '16px "MS PGothic"';
+            ctx.textAlign = 'left';
             ctx.fillText(`SCORE: ${score.toString().padStart(8, '0')}`, 10, 30);
+            ctx.fillText(`LIVES: ${'★'.repeat(lives)}`, 10, 50);
 
             if (isGameOver) {
-                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
                 ctx.fillRect(0, 0, 400, 600);
                 ctx.fillStyle = '#ff0000';
                 ctx.textAlign = 'center';
+                ctx.font = '30px "MS PGothic"';
                 ctx.fillText('G A M E   O V E R', 200, 300);
-                ctx.font = '12px "MS PGothic"';
-                ctx.fillText('Press [R] to Restart', 200, 330);
+                ctx.font = '14px "MS PGothic"';
+                ctx.fillText('Press [R] to Restart', 200, 340);
             }
 
             if (glitchActive) {
@@ -266,7 +296,7 @@ export const RetroPinball: React.FC = () => {
             window.removeEventListener('keyup', handleKeyUp);
             cancelAnimationFrame(animationFrameId);
         };
-    }, [isGameOver, glitchActive, score]);
+    }, [isGameOver, glitchActive, score, lives]);
 
     return (
         <div className={`relative bg-black p-4 flex flex-col items-center select-none ${glitchActive ? 'animate-pulse' : ''}`}>
@@ -278,21 +308,27 @@ export const RetroPinball: React.FC = () => {
                     RESTART [R]
                 </button>
             </div>
-            <div className="border-4 border-[#808080] bg-[#404040] shadow-xl">
+            <div className="border-4 border-[#808080] bg-[#404040] shadow-xl overflow-hidden">
                 <canvas
                     ref={canvasRef}
                     width={400}
                     height={600}
-                    className={`block ${glitchActive ? 'skew-x-1 transition-transform' : ''}`}
+                    className="block"
                     style={{ imageRendering: 'pixelated' }}
                 />
             </div>
-            <p className="mt-4 text-[10px] text-gray-400 font-mono">
-                [Arrows/Shift] Control Flippers | [R] Reset | [!] Chaos Multiball hidden...
-            </p>
+            <div className="mt-4 flex flex-col items-center gap-1">
+                <p className="text-[10px] text-gray-400 font-mono">
+                    [Arrows/Shift] Control Flippers | [R] Reset
+                </p>
+                <div className="flex gap-4">
+                    <div className="h-6 w-12 bg-gray-800 rounded-full border border-gray-600 flex items-center justify-center text-[10px] text-yellow-500 font-bold">L-Shift</div>
+                    <div className="h-6 w-12 bg-gray-800 rounded-full border border-gray-600 flex items-center justify-center text-[10px] text-yellow-500 font-bold">R-Shift</div>
+                </div>
+            </div>
             {glitchActive && (
                 <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-                    {[...Array(20)].map((_, i) => (
+                    {[...Array(30)].map((_, i) => (
                         <div
                             key={i}
                             className="absolute bg-white opacity-20"
@@ -301,7 +337,7 @@ export const RetroPinball: React.FC = () => {
                                 height: '1px',
                                 top: Math.random() * 100 + '%',
                                 left: 0,
-                                animation: `glitch ${Math.random() + 0.5}s infinite`
+                                animation: `glitch ${Math.random() * 0.2 + 0.1}s infinite`
                             }}
                         />
                     ))}
@@ -310,8 +346,8 @@ export const RetroPinball: React.FC = () => {
             <style>{`
                 @keyframes glitch {
                     0% { transform: translateX(0); }
-                    50% { transform: translateX(10px); }
-                    100% { transform: translateX(-10px); }
+                    50% { transform: translateX(5px); }
+                    100% { transform: translateX(-5px); }
                 }
             `}</style>
         </div>
