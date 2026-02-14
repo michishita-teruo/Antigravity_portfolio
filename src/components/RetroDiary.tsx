@@ -8,6 +8,40 @@ export const RetroDiary: React.FC = () => {
             </h2>
 
             <div className="mb-12">
+                <div className="text-xs text-gray-500 mb-1">2026/02/15 (Sun) 00:05</div>
+                <h3 className="text-lg text-emerald-400 mb-4">物理演算の深淵：ピンボール開発奮闘記</h3>
+                <div className="pl-4 border-l border-emerald-900 space-y-2 text-sm leading-7">
+                    <p>
+                        「ピンボールを作ろう」。<br />
+                        その一言が、これほどまでに深い「沼」への招待状になるとは思わなかった。
+                    </p>
+                    <br />
+                    <p>
+                        ボールが壁をすり抜ける「トンネル現象」。<br />
+                        天井の角に吸い込まれるようにスタックする重力の悪戯。<br />
+                        サブステッピングに位置補正……数学の海を必死に泳いだが、<br />
+                        理想の「跳ね返り」は、蜃気楼のように遠のいていく。
+                    </p>
+                    <br />
+                    <p>
+                        物理演算、それは初学者にとっては甘美な毒、あるいは終わりのない迷宮。<br />
+                        思っていた動作とは少し違うかもしれないけれど、<br />
+                        この「不完全な摩擦」の中にこそ、管理人の汗と涙（と電流）が染み込んでいる。
+                    </p>
+                    <br />
+                    <p>
+                        一旦、調整のペンを置こう。<br />
+                        完璧ではないからこそ、愛おしい。<br />
+                        そんな「不時着版ピンボール」も、このサイトの一部として残しておくことにした。
+                    </p>
+                    <br />
+                    <p className="text-xs text-gray-600 text-right">
+                        Today's BGM: Physical (Swamp Version)
+                    </p>
+                </div>
+            </div>
+
+            <div className="mb-12">
                 <div className="text-xs text-gray-500 mb-1">2026/02/14 (Sat) 22:15</div>
                 <h3 className="text-lg text-pink-400 mb-4">記憶の回廊：ギャラリーの完成</h3>
                 <div className="pl-4 border-l border-pink-900 space-y-2 text-sm leading-7">
