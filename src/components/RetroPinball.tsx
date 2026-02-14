@@ -50,20 +50,20 @@ export const RetroPinball: React.FC = () => {
 
     // 壁の定義（ファネル形状とシューターレーン）
     const walls = useRef([
-        { x1: 0, y1: 480, x2: 100, y2: 560 },   // Left Funnel
-        { x1: 370, y1: 480, x2: 300, y2: 560 }, // Right Funnel
-        { x1: 370, y1: 600, x2: 370, y2: 200 }  // Shooter Lane Wall
+        { x1: 0, y1: 480, x2: 120, y2: 560 },   // Left Funnel (フリッパー 120 へ)
+        { x1: 370, y1: 480, x2: 280, y2: 560 }, // Right Funnel (フリッパー 280 へ)
+        { x1: 370, y1: 600, x2: 370, y2: 120 }  // Shooter Lane Wall (もう少し高く)
     ]);
 
     // 丸型（卵型）天井のセグメントを生成
     useEffect(() => {
         const segments = [];
-        const centerX = 200; // 盤面全体(400)の中央
-        const centerY = 200;
-        const radiusX = 200; // 端から端まで
-        const radiusY = 200;
-        const count = 16;
-        for (let i = 0; i <= count; i++) {
+        const centerX = 200;
+        const centerY = 150; // 少し上げる
+        const radiusX = 200;
+        const radiusY = 150;
+        const count = 20; // 精度を上げる
+        for (let i = 0; i < count; i++) {
             const angle1 = Math.PI + (i / count) * Math.PI;
             const angle2 = Math.PI + ((i + 1) / count) * Math.PI;
             segments.push({
@@ -78,14 +78,14 @@ export const RetroPinball: React.FC = () => {
 
     const GRAVITY = 0.28;
     const FRICTION = 0.996;
-    const BOUNCE = 0.65;
+    const BOUNCE = 0.6;
 
     const launchBall = () => {
         balls.current.push({
             x: 385,
             y: 580,
             vx: 0,
-            vy: -22 - Math.random() * 5, // 射出力を強化
+            vy: -24 - Math.random() * 5, // 射出をさらに強力に
             radius: 8,
             color: '#ffffff',
             isGlitching: false
@@ -104,6 +104,13 @@ export const RetroPinball: React.FC = () => {
 
     useEffect(() => {
         resetGame();
+
+        // テスト用：5秒ごとにボールを追加
+        const timer = setInterval(() => {
+            if (!isGameOver) {
+                launchBall();
+            }
+        }, 5000);
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (isGameOver && (e.key === 'r' || e.key === 'R')) {
@@ -158,7 +165,7 @@ export const RetroPinball: React.FC = () => {
                 ball.x += ball.vx;
                 ball.y += ball.vy;
 
-                // 左右の壁
+                // 左右の壁（天井やガイドがある部分は不要だが、念のため外側への突き抜け防止）
                 if (ball.x < ball.radius) {
                     ball.x = ball.radius;
                     ball.vx = Math.abs(ball.vx) * BOUNCE;
@@ -168,9 +175,9 @@ export const RetroPinball: React.FC = () => {
                     ball.vx = -Math.abs(ball.vx) * BOUNCE;
                 }
 
-                // 天井の個別判定は削除（walls 経由で判定）
+                // 上部は天井(walls)で判定
 
-                // ファネル壁の衝突判定
+                // ファネル壁・天井の衝突判定
                 walls.current.forEach(wall => {
                     const dx = wall.x2 - wall.x1;
                     const dy = wall.y2 - wall.y1;
@@ -192,12 +199,15 @@ export const RetroPinball: React.FC = () => {
                         const normalX = distance === 0 ? 0 : distX / distance;
                         const normalY = distance === 0 ? 1 : distY / distance;
 
+                        // 挟まり・めり込み防止のための押し出し
                         ball.x += normalX * overlap;
                         ball.y += normalY * overlap;
 
                         const dotProduct = ball.vx * normalX + ball.vy * normalY;
-                        ball.vx = (ball.vx - 2 * dotProduct * normalX) * BOUNCE;
-                        ball.vy = (ball.vy - 2 * dotProduct * normalY) * BOUNCE;
+                        if (dotProduct < 0) { // 壁に向かっている場合のみ反射
+                            ball.vx = (ball.vx - 2 * dotProduct * normalX) * BOUNCE;
+                            ball.vy = (ball.vy - 2 * dotProduct * normalY) * BOUNCE;
+                        }
                     }
                 });
 
@@ -390,6 +400,7 @@ export const RetroPinball: React.FC = () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
             cancelAnimationFrame(animationFrameId);
+            clearInterval(timer);
         };
     }, [isGameOver, lives]);
 
