@@ -48,7 +48,7 @@ export const RetroGallery: React.FC = () => {
             {loading ? (
                 <div className="text-center p-10 font-mono text-sm animate-pulse">
                     LOADING GALLERY DATA... <br />
-                    NOW CONNECTING TO FIREBASE STORAGE
+                    NOW CONNECTING TO FIRESTORE
                 </div>
             ) : (
                 <table className="w-full border-collapse border-2 border-[#808080] bg-[#c0c0c0] text-black">
