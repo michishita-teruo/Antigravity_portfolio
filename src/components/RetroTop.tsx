@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { RetroAvatar } from './RetroAvatar';
 
 export const RetroTop: React.FC = () => {
@@ -120,6 +121,9 @@ export const RetroTop: React.FC = () => {
                 <p className="text-red-500 text-lg animate-pulse font-bold">
                     ↑↑↑ Bookmark This Page !! ↑↑↑
                 </p>
+                <Link to="/retro/construction" className="text-[10px] text-[#404040] hover:text-[#ff0000] ml-2 decoration-none">
+                    [???]
+                </Link>
             </div>
         </div>
     );
