@@ -32,6 +32,6 @@ jobs:
           SOURCE: "dist/"
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USER }}
-          SSH_PORT: 10022
+          REMOTE_PORT: 10022
           TARGET: "/home/cf834139/terufrontendjp.duckdns.org/public_html/"
           EXCLUDE: "/dist/, /node_modules/"
