@@ -13,6 +13,7 @@ import { RetroBBS } from './components/RetroBBS';
 import { RetroLink } from './components/RetroLink';
 import { RetroMail } from './components/RetroMail';
 import { RetroUnderConstruction } from './components/RetroUnderConstruction';
+import { RetroGallery } from './components/RetroGallery';
 import { Github, Twitter, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -75,6 +76,7 @@ function App() {
           <Route path="link" element={<RetroLink />} />
           <Route path="mail" element={<RetroMail />} />
           <Route path="construction" element={<RetroUnderConstruction />} />
+          <Route path="gallery" element={<RetroGallery />} />
         </Route>
         <Route path="*" element={
           <div className="min-h-screen bg-antigravity-dark text-white font-sans selection:bg-antigravity-purple/30">
