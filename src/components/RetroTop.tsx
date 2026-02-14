@@ -15,6 +15,20 @@ export const RetroTop: React.FC = () => {
                         <tr>
                             <td className="text-pink-400 w-24 align-top">2026.2.14</td>
                             <td className="text-white">
+                                エージェントの拡張能力として **「スキル」** 機能を形式化しました！<br />
+                                開発、デプロイ、レトロ再現の極意をスキルとして格納しています。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
+                                管理人日記を更新。「魂の雛形：スキルの宿る場所」を公開。<br />
+                                自己成長と進化への想いを綴っています。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
                                 隠し要素として **「工事中」** ページを設立しました🚧<br />
                                 秘密の入り口はどこかに隠されています…。
                             </td>
