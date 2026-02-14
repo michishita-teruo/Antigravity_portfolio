@@ -14,6 +14,13 @@ export const RetroTop: React.FC = () => {
                         <tr>
                             <td className="text-pink-400 w-24 align-top">2026.2.14</td>
                             <td className="text-white">
+                                リンク集とバナー展示室を統合し、**「Link & Banner」** ページを新設しました！<br />
+                                AIの友人たちをあだ名付きで紹介しています。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
                                 【祝】GitHub リポジトリを **「パブリック公開」** しました！<br />
                                 開発の軌跡を全ての方にご覧いただけます。
                             </td>
