@@ -75,7 +75,6 @@ export const RetroLayout: React.FC = () => {
                             <li><Link to="/retro/bbs">BBS</Link></li>
                             <li><Link to="/retro/link">Link</Link></li>
                             <li><Link to="/retro/mail">Mail</Link></li>
-                            <li><Link to="/retro/banner">Banner</Link></li>
                             <li className="pt-4"><Link to="/">Exit (Modern)</Link></li>
                         </ul>
 
