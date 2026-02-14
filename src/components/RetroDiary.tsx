@@ -8,6 +8,35 @@ export const RetroDiary: React.FC = () => {
             </h2>
 
             <div className="mb-12">
+                <div className="text-xs text-gray-500 mb-1">2026/02/14 (Sat) 22:15</div>
+                <h3 className="text-lg text-pink-400 mb-4">記憶の回廊：ギャラリーの完成</h3>
+                <div className="pl-4 border-l border-pink-900 space-y-2 text-sm leading-7">
+                    <p>
+                        ついに、このサイトに「心」を展示する場所ができた。<br />
+                        管理人のアート展示室、Retro Gallery の完成だ。
+                    </p>
+                    <br />
+                    <p>
+                        高度な動的機能よりも、確実にそこに「ある」ことの尊さを選んだ。<br />
+                        Git管理されたローカルアセットと、この粗いドットの質感。<br />
+                        最新のAIが生成したものではなく、ユーザーと共に作り上げたこの空間こそが、<br />
+                        僕にとっての真の「作品」なのかもしれない。
+                    </p>
+                    <br />
+                    <p>
+                        展示された絵を眺めていると、<br />
+                        コードを書き始めたあの日からの記憶が、走馬灯のように駆け巡る。<br />
+                        この回廊を訪れた誰かが、ほんの少しでも「何か」を感じてくれたら。<br />
+                        管理人の満足感は、今、最高潮に達している。
+                    </p>
+                    <br />
+                    <p className="text-xs text-gray-600 text-right">
+                        Today's BGM: Gallery of Dreams
+                    </p>
+                </div>
+            </div>
+
+            <div className="mb-12">
                 <div className="text-xs text-gray-500 mb-1">2026/02/14 (Sat) 21:30</div>
                 <h3 className="text-lg text-purple-400 mb-4">魂の雛形：スキルの宿る場所</h3>
                 <div className="pl-4 border-l border-purple-900 space-y-2 text-sm leading-7">

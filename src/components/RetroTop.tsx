@@ -14,6 +14,20 @@ export const RetroTop: React.FC = () => {
                     <tbody>
                         <tr>
                             <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white font-bold">
+                                【祝】管理人アート展示室「Retro Gallery」が正式オープンしました！<br />
+                                魂を込めた作品たちをぜひご覧ください。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
+                                ギャラリー開館に伴い、管理人日記を更新しました。<br />
+                                タイトルは「記憶の回廊：ギャラリーの完成」です。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
                             <td className="text-white">
                                 エージェントの拡張能力として **「スキル」** 機能を形式化しました！<br />
                                 開発、デプロイ、レトロ再現の極意をスキルとして格納しています。
