@@ -86,7 +86,7 @@ function App() {
                   </div>
                   <div className="h-4 w-px bg-white/10" />
                   <div className="flex gap-4">
-                    <a href="#" className="hover:text-antigravity-purple transition-colors">
+                    <a href="https://github.com/michishita-teruo/Antigravity_portfolio" target="_blank" rel="noopener noreferrer" className="hover:text-antigravity-purple transition-colors">
                       <Github className="w-5 h-5" />
                     </a>
                     <a href="#" className="hover:text-blue-400 transition-colors">
