@@ -48,12 +48,33 @@ export const RetroPinball: React.FC = () => {
         { x: 300, y: 150, radius: 30, color: '#ffff00', hitTime: 0 }
     ]);
 
-    // 壁の定義（ファネル形状）
+    // 壁の定義（ファネル形状とシューターレーン）
     const walls = useRef([
         { x1: 0, y1: 450, x2: 110, y2: 530 },   // Left Funnel
-        { x1: 400, y1: 450, x2: 290, y2: 530 }, // Right Funnel
-        { x1: 385, y1: 600, x2: 385, y2: 200 }  // Shooter Lane Wall
+        { x1: 370, y1: 450, x2: 290, y2: 530 }, // Right Funnel (シューターレーンを避けるため370開始)
+        { x1: 370, y1: 600, x2: 370, y2: 150 }  // Shooter Lane Wall
     ]);
+
+    // 丸型（卵型）天井のセグメントを生成
+    useEffect(() => {
+        const segments = [];
+        const centerX = 185; // (0 + 370) / 2
+        const centerY = 150;
+        const radiusX = 185;
+        const radiusY = 150;
+        const count = 10;
+        for (let i = 0; i <= count; i++) {
+            const angle1 = Math.PI + (i / count) * Math.PI;
+            const angle2 = Math.PI + ((i + 1) / count) * Math.PI;
+            segments.push({
+                x1: centerX + Math.cos(angle1) * radiusX,
+                y1: centerY + Math.sin(angle1) * radiusY,
+                x2: centerX + Math.cos(angle2) * radiusX,
+                y2: centerY + Math.sin(angle2) * radiusY
+            });
+        }
+        walls.current = [...walls.current, ...segments];
+    }, []);
 
     const GRAVITY = 0.25;
     const FRICTION = 0.995;
@@ -147,17 +168,7 @@ export const RetroPinball: React.FC = () => {
                     ball.vx = -Math.abs(ball.vx) * BOUNCE;
                 }
 
-                // 上部の壁
-                if (ball.y < ball.radius && !ball.isGlitching) {
-                    ball.y = ball.radius;
-                    ball.vy = Math.abs(ball.vy) * BOUNCE;
-                    // 中央から離れる方向に押し出す
-                    if (ball.x > 200) {
-                        ball.vx += 2;
-                    } else {
-                        ball.vx -= 2;
-                    }
-                }
+                // 天井の個別判定は削除（walls 経由で判定）
 
                 // ファネル壁の衝突判定
                 walls.current.forEach(wall => {
