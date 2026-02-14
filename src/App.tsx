@@ -10,6 +10,7 @@ import { RetroTop } from './components/RetroTop';
 import { RetroProfile } from './components/RetroProfile';
 import { RetroDiary } from './components/RetroDiary';
 import { RetroBBS } from './components/RetroBBS';
+import { RetroBanner } from './components/RetroBanner';
 import { RetroLink } from './components/RetroLink';
 import { RetroMail } from './components/RetroMail';
 import { Github, Twitter, Menu, X } from 'lucide-react';
@@ -68,6 +69,7 @@ function App() {
           <Route path="bbs" element={<RetroBBS />} />
           <Route path="link" element={<RetroLink />} />
           <Route path="mail" element={<RetroMail />} />
+          <Route path="banner" element={<RetroBanner />} />
         </Route>
         <Route path="*" element={
           <div className="min-h-screen bg-antigravity-dark text-white font-sans selection:bg-antigravity-purple/30">
