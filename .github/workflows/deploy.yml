@@ -23,6 +23,19 @@ jobs:
 
       - name: Build project
         run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          VITE_GOOGLE_FORM_ACTION_URL: ${{ secrets.VITE_GOOGLE_FORM_ACTION_URL }}
+          VITE_ENTRY_ID_NAME: ${{ secrets.VITE_ENTRY_ID_NAME }}
+          VITE_ENTRY_ID_EMAIL: ${{ secrets.VITE_ENTRY_ID_EMAIL }}
+          VITE_ENTRY_ID_SUBJECT: ${{ secrets.VITE_ENTRY_ID_SUBJECT }}
+          VITE_ENTRY_ID_MESSAGE: ${{ secrets.VITE_ENTRY_ID_MESSAGE }}
 
       - name: SFTP Deploy
         uses: easingthemes/ssh-deploy@v5.1.0
@@ -33,5 +46,5 @@ jobs:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USER }}
           REMOTE_PORT: 10022
-          TARGET: "/home/cf834139/terufrontendjp.duckdns.org/public_html/"
+          TARGET: ${{ secrets.REMOTE_TARGET }}
           EXCLUDE: "/dist/, /node_modules/"

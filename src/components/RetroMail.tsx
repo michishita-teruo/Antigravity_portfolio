@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-const GOOGLE_FORM_ACTION_URL = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSdRCcz-TmBdqlHbWlQwqo_OrifwOYMG8SuzECrxyziXcXPBrg/formResponse';
-const ENTRY_ID_NAME = 'entry.712711132';
-const ENTRY_ID_EMAIL = 'entry.521588374';
-const ENTRY_ID_SUBJECT = 'entry.160261954';
-const ENTRY_ID_MESSAGE = 'entry.468313787';
+const GOOGLE_FORM_ACTION_URL = import.meta.env.VITE_GOOGLE_FORM_ACTION_URL;
+const ENTRY_ID_NAME = import.meta.env.VITE_ENTRY_ID_NAME;
+const ENTRY_ID_EMAIL = import.meta.env.VITE_ENTRY_ID_EMAIL;
+const ENTRY_ID_SUBJECT = import.meta.env.VITE_ENTRY_ID_SUBJECT;
+const ENTRY_ID_MESSAGE = import.meta.env.VITE_ENTRY_ID_MESSAGE;
 
 export const RetroMail: React.FC = () => {
     const [name, setName] = useState('');
