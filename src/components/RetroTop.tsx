@@ -14,6 +14,13 @@ export const RetroTop: React.FC = () => {
                         <tr>
                             <td className="text-pink-400 w-24 align-top">2026.2.14</td>
                             <td className="text-white">
+                                【完了】GitHub Actions とサーバーの連動を最終確認しました！<br />
+                                これで全ての環境構築が終了です。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="text-pink-400 w-24 align-top">2026.2.14</td>
+                            <td className="text-white">
                                 GitHub Actions による **「全自動デプロイ」** に対応しました！<br />
                                 開発効率が300%アップ（自称）しました。
                             </td>
