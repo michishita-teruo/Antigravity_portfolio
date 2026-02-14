@@ -103,10 +103,10 @@ export const RetroPinball: React.FC = () => {
 
     const launchBall = () => {
         balls.current.push({
-            x: 385,
+            x: 387, // 375-400の中央付近
             y: 580,
-            vx: -1,
-            vy: -18 - Math.random() * 3,
+            vx: 0, // 摩擦を避けるため水平速度をゼロに
+            vy: -26 - Math.random() * 4, // 射出力を大幅に強化
             radius: 8,
             color: '#ffffff',
             isGlitching: false
