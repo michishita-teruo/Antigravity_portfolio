@@ -25,10 +25,13 @@ const ScrollToTop = () => {
   return null;
 };
 
+import { Skills } from './components/Skills';
+
 const Home = () => (
   <>
     <Hero />
     <Features />
+    <Skills />
     <Demo />
     <TechStack />
   </>
